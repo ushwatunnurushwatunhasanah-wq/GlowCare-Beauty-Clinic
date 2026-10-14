@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Web App (React + Vite Frontend)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: glowcare_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+    networks:
+      - glowcare_network
+
+  # Laravel API Backend (PHP 8.2-FPM)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: glowcare_backend
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=glowcare_clinic
+      - DB_USERNAME=glowcare_user
+      - DB_PASSWORD=glowcare_secret
+    depends_on:
+      - db
+    networks:
+      - glowcare_network
+
+  # Nginx Web Server for Laravel
+  nginx:
+    image: nginx:alpine
+    container_name: glowcare_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - glowcare_network
+
+  # MySQL Database with persistent volume
+  db:
+    image: mysql:8.0
+    container_name: glowcare_mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: glowcare_clinic
+      MYSQL_USER: glowcare_user
+      MYSQL_PASSWORD: glowcare_secret
+      MYSQL_ROOT_PASSWORD: root_secret_password
+    volumes:
+      - glowcare_mysql_data:/var/lib/mysql
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - glowcare_network
+
+volumes:
+  glowcare_mysql_data:
+    driver: local
+
+networks:
+  glowcare_network:
+    driver: bridge

@@ -1,0 +1,6 @@
+{
+  "name": "GlowCare Beauty Clinic",
+  "description": "Sistem Manajemen Klinik Perawatan Kecantikan Modern dan Elegan - Your Beauty, Our Care",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
