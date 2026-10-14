@@ -198,23 +198,20 @@ function saveStorage<T>(key: string, value: T) {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Start with login view first before entering dashboard
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('glowcare_current_user');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && (parsed.id === 'usr-1' || parsed.email === 'admin@glowcare.test' || (parsed.name && parsed.name.includes('Amanda')))) {
-          parsed.name = INITIAL_USERS[0].name;
-          localStorage.setItem('glowcare_current_user', JSON.stringify(parsed));
-          return parsed;
-        }
-        return parsed;
-      } catch {
-        return INITIAL_USERS[0];
+    try {
+      localStorage.removeItem('glowcare_current_user');
+      const sessionSaved = sessionStorage.getItem('glowcare_session_user');
+      if (sessionSaved) {
+        return JSON.parse(sessionSaved);
       }
+    } catch {
+      // ignore
     }
-    return INITIAL_USERS[0]; // default logged in as admin for immediate evaluation
+    return null;
   });
+
 
   const [users, setUsers] = useState<User[]>(() => {
     const saved = loadStorage<User[]>('users', INITIAL_USERS);
@@ -345,14 +342,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentModal, setCurrentModal] = useState<string | null>(null);
   const [modalData, setModalData] = useState<any>(null);
 
-  // Sync to localStorage
+  // Sync session (scoped to browser session, login required first)
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('glowcare_current_user', JSON.stringify(currentUser));
-    } else {
+    try {
+      if (currentUser) {
+        sessionStorage.setItem('glowcare_session_user', JSON.stringify(currentUser));
+      } else {
+        sessionStorage.removeItem('glowcare_session_user');
+      }
       localStorage.removeItem('glowcare_current_user');
+    } catch {
+      // ignore
     }
   }, [currentUser]);
+
 
   useEffect(() => saveStorage('patients', patients), [patients]);
   useEffect(() => saveStorage('users', users), [users]);
@@ -592,8 +595,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (currentUser) {
       logAction('Pengguna Keluar (Logout)', `User ${currentUser.name}`);
     }
+    try {
+      sessionStorage.removeItem('glowcare_session_user');
+      localStorage.removeItem('glowcare_current_user');
+    } catch {}
     setCurrentUser(null);
   };
+
 
   const switchRole = (role: UserRole, specificEmailOrId?: string) => {
     if (specificEmailOrId) {

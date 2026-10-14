@@ -21,7 +21,8 @@ import {
   Printer,
   ChevronRight,
   X,
-  Database
+  Database,
+  LogOut
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { UserRole } from '../../types';
@@ -46,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile
 }) => {
-  const { currentUser, currentDoctor, isMyDoctorData, queues, appointments, ratings, payments } = useApp();
+  const { currentUser, currentDoctor, isMyDoctorData, queues, appointments, ratings, payments, logout } = useApp();
   const role: UserRole = currentUser?.role || 'admin';
   const isDoctor = role === 'dokter';
 
@@ -220,6 +221,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <p className="text-xs font-semibold text-stone-900 truncate">{currentUser?.name}</p>
             <p className="text-[10px] text-stone-500 capitalize">{currentUser?.department || role}</p>
           </div>
+        </button>
+
+        <button
+          onClick={() => {
+            onCloseMobile();
+            logout();
+          }}
+          className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl py-2 px-3 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors border border-stone-200/60 hover:border-rose-200 cursor-pointer"
+          title="Keluar dari sistem"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span>Keluar (Logout)</span>
         </button>
       </div>
     </div>
